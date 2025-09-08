@@ -1,0 +1,23 @@
+Project Overview
+Main Goals:
+
+Create a login system using JWT authentication
+Build a profile page displaying your school data (XP, grades, projects, etc.)
+Generate interactive SVG statistics/graphs
+Host the application online
+
+Key Features:
+
+Authentication: Login page supporting both username:password and email:password
+Profile Display: Show 3+ pieces of personal data (XP, grades, audits, skills, etc.)
+Statistics Graphs: At least 2 different SVG-based charts (XP over time, project success rates, audit ratios, etc.)
+Data Querying: Use GraphQL with normal queries, nested queries, and queries with arguments
+
+Data Sources:
+
+user table: Basic user info
+transaction table: XP data and audit information
+progress table: Project grades and progression
+result table: Exercise/project results
+object table: Information about exercises/projects
+
