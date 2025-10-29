@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- <link rel="icon" type="image/png"
-        href="https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/GraphQL_Logo.svg/2048px-GraphQL_Logo.svg.png" /> -->
     <link rel="stylesheet" href="css/loader.css">
     <link rel="stylesheet" href="css/grid-layout.css">
     <link rel="stylesheet" href="css/line-graph.css">
@@ -17,6 +15,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Epunda+Slab:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <title>GraphQl</title>
 </head>
 <body style="background-color: #1560DB;">
@@ -55,32 +54,21 @@
     </div>
     
     <!-- JavaScript imports -->
-    <!-- <script src="js/utils.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/charts.js"></script> -->
+    <script type="module" src="js/utils.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/api.js"></script>
+    <script type="module" src="js/charts.js"></script>
     
     <!-- UI modules -->
-    <!-- <script src="js/ui/loader.js"></script> -->
-    <!-- <script src="js/ui/signIn.js"></script>
-    <script src="js/ui/navigation.js"></script>
-    <script src="js/ui/homepage-layout.js"></script>
-    <script src="js/ui/profile.js"></script>
-    <script src="js/ui/statistics.js"></script>
-     -->
+    <script type="module" src="js/ui/loader.js"></script>
+    <script type="module" src="js/ui/signIn.js"></script>
+    <script type="module" src="js/ui/navigation.js"></script>
+    <script type="module" src="js/ui/homepage-layout.js"></script>
+    <script type="module" src="js/ui/profile.js"></script>
+    <script type="module" src="js/ui/statistics.js"></script>
+
     <!-- Main GraphQL module -->
-    <!-- <script type="module" src="js/graphql.js"></script> -->
-    <script type="module">
-        import loader from './js/ui/loader.js';
-        import signIn from './js/ui/signIn.js';
-        import navigation from './js/ui/navigation.js';
-
-
-        document.addEventListener("DOMContentLoaded", () => {
-            navigation.init();
-            navigation.show()
-        });
-    </script>
+    <script type="module" src="js/graphql.js"></script>
 
 </body>
 </html>
