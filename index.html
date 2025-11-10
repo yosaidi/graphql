@@ -1,86 +1,207 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- <link rel="icon" type="image/png"
-        href="https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/GraphQL_Logo.svg/2048px-GraphQL_Logo.svg.png" /> -->
-    <link rel="stylesheet" href="css/loader.css">
-    <link rel="stylesheet" href="css/grid-layout.css">
-    <link rel="stylesheet" href="css/line-graph.css">
-    <link rel="stylesheet" href="css/projects.css">
-    <link rel="stylesheet" href="css/skills.css">
-    <link rel="stylesheet" href="css/charts.css">
-    <link rel="stylesheet" href="css/other.css">
-    <link rel="stylesheet" href="css/signIn.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Epunda+Slab:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
-    <title>GraphQl</title>
-</head>
-<body style="background-color: #1560DB;">
-    <!-- Main App Container -->
-    <div id="app">
-        <!-- Loader -->
-        <div id="loader-container">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A platform where you can see your own school information"
+    />
+    <title>Zone01 Oujda - GraphQL Profile</title>
+    <link
+      as="font"
+      href="/assets/IBMPlexSans-light-latin.woff2"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="icon" href="assets/logo.png" type="image/png" />
+  </head>
+  <body>
+    <div id="root">
+      <!-- Login View -->
+      <div id="login-view" class="view" style="display: none">
+        <div class="login-form">
+          <div class="logo-header">
+            <div class="logo-container">
+              <img src="assets/logo.png" alt="Logo" />
+            </div>
+            <h1 class="brand-name">GraphQL</h1>
+            <p class="brand-tagline">School's Information Platform</p>
+          </div>
+          <div id="authenticate" class="authenticate">
+            <form id="login-form">
+              <div class="login">
+                <span id="auth-title" class="auth-title">
+                  <p id="auth-prim-title" class="auth-prim-title">
+                    Log in to see your work
+                  </p>
+                  <p id="auth-sec-title" class="auth-sec-title"></p>
+                </span>
+
+                <ul>
+                  <li class="login-register">
+                    <label id="email-label" for="email-field"
+                      >Email or Username</label
+                    >
+                    <input
+                      type="text"
+                      id="email-field"
+                      name="email"
+                      autocomplete="username"
+                      required
+                    />
+                  </li>
+
+                  <li id="password-wrap" class="password">
+                    <label for="password-field">Password</label>
+                    <div class="password-container">
+                      <input
+                        type="password"
+                        id="password-field"
+                        name="password"
+                        minlength="6"
+                        autocomplete="current-password"
+                        required
+                      />
+                      <span class="eye" id="eye">👁️</span>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
+              <p id="error-message" class="error-message"></p>
+
+              <div id="buttons">
+                <button
+                  type="submit"
+                  class="authenticate-button"
+                  id="authenticate-button"
+                >
+                  login
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
+      </div>
 
-        <!-- Sign In Page -->
-        <div id="sign-in-container" class="hidden">
+      <!-- Dashboard View -->
+      <div id="dashboard-view" class="view" style="display: none">
+        <div class="dashboard-wrapper">
+          <!-- Header -->
+          <header class="dashboard-header">
+            <div class="header-content">
+              <div class="user-info">
+                <div class="avatar">
+                  <span id="user-avatar-text"></span>
+                </div>
+                <div class="user-details">
+                  <h1 id="user-login">Loading...</h1>
+                  <p id="user-id"></p>
+                </div>
+              </div>
+              <button id="logout-button" class="logout-btn">
+                <span>Logout</span>
+              </button>
+            </div>
+          </header>
+
+          <!-- Main Dashboard Content -->
+          <main class="dashboard-content">
+            <!-- Stats Cards -->
+            <section class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-content">
+                  <h3>Total XP</h3>
+                  <p id="total-xp" class="stat-value">0</p>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-icon">⚖️</div>
+                <div class="stat-content">
+                  <h3>Audit Ratio</h3>
+                  <p id="audit-ratio" class="stat-value">0</p>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-content">
+                  <h3>Projects Passed</h3>
+                  <p id="projects-passed" class="stat-value">0</p>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-content">
+                  <h3>Success Rate</h3>
+                  <p id="success-rate" class="stat-value">0%</p>
+                </div>
+              </div>
+            </section>
+
+            <!-- Graphs Section -->
+            <section class="graphs-section">
+              <h2 class="section-title">Statistics & Progress</h2>
+
+              <div class="graphs-grid">
+                <!-- XP Over Time Graph -->
+                <div class="graph-card">
+                  <h3 class="graph-title">XP Progress Over Time</h3>
+                  <div class="graph-container">
+                    <svg id="xp-timeline-graph" class="graph-svg"></svg>
+                  </div>
+                </div>
+
+                <!-- XP by Project Graph -->
+                <div class="graph-card">
+                  <h3 class="graph-title">Top Projects by XP</h3>
+                  <div class="graph-container">
+                    <svg id="xp-projects-graph" class="graph-svg"></svg>
+                  </div>
+                </div>
+
+                <!-- Audit Ratio Visualization -->
+                <div class="graph-card">
+                  <h3 class="graph-title">Audit Ratio Breakdown</h3>
+                  <div class="graph-container">
+                    <svg id="audit-ratio-graph" class="graph-svg"></svg>
+                  </div>
+                </div>
+
+                <!-- Pass/Fail Ratio -->
+                <div class="graph-card">
+                  <h3 class="graph-title">Project Success Rate</h3>
+                  <div class="graph-container">
+                    <svg id="pass-fail-graph" class="graph-svg"></svg>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Recent Activity -->
+            <section class="activity-section">
+              <h2 class="section-title">Recent Activity</h2>
+              <div id="recent-activity" class="activity-list">
+                <!-- Activity items will be inserted here -->
+              </div>
+            </section>
+          </main>
         </div>
-        
-        <!-- Main Dashboard -->
-        <div id="main-container" class="hidden">
-            <!-- Header/Navigation -->
-            <header id="header">
-            </header>
+      </div>
 
-            <!-- Main Content -->
-            <main id="main-content">
-                <!-- Profile Section -->
-                <section id="profile-section">
-                </section>
-
-                <!-- Statistics Section -->
-                <section id="statistics-section">
-                </section>
-            </main>
+      <!-- Loading View -->
+      <div id="loading-view" class="view" style="display: none">
+        <div class="loading-container">
+          <div class="spinner"></div>
+          <p>Loading...</p>
         </div>
-
-        <!-- Error/Message Container -->
-        <div id="message-container" class="hidden">
-        </div>
-
+      </div>
     </div>
-    
-    <!-- JavaScript imports -->
-    <!-- <script src="js/utils.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/charts.js"></script> -->
-    
-    <!-- UI modules -->
-    <!-- <script src="js/ui/loader.js"></script> -->
-    <!-- <script src="js/ui/signIn.js"></script>
-    <script src="js/ui/navigation.js"></script>
-    <script src="js/ui/homepage-layout.js"></script>
-    <script src="js/ui/profile.js"></script>
-    <script src="js/ui/statistics.js"></script>
-     -->
-    <!-- Main GraphQL module -->
-    <!-- <script type="module" src="js/graphql.js"></script> -->
-    <script type="module">
-        import loader from './js/ui/loader.js';
-        import signIn from './js/ui/signIn.js';
-        import navigation from './js/ui/navigation.js';
 
-
-        document.addEventListener("DOMContentLoaded", () => {
-            navigation.init();
-            navigation.show()
-        });
-    </script>
-
-</body>
+    <script src="js/main.js"></script>
+    <script src="js/dashboard.js"></script>
+  </body>
 </html>
