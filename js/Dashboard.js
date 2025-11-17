@@ -1,58 +1,57 @@
-// Dashboard Manager
-const Dashboard = {
-  userData: null,
-  xpTransactions: [],
-  progresses: [],
+export class Dashboard {
+  userData = null;
+  xpTransactions = [];
+  progresses = [];
 
   init() {
-    // Load user data from localStorage
     const userDataStr = localStorage.getItem("userData");
     if (!userDataStr) {
-      AuthHandler.logout();
+      // If data is missing, force a logout to re-fetch
+      const authEvent = new Event("force-logout");
+      document.dispatchEvent(authEvent);
       return;
     }
 
     this.userData = JSON.parse(userDataStr);
-    this.processData();
-    this.renderDashboard();
-  },
+    this.#processData();
+    this.#renderDashboard();
+  }
 
-  processData() {
-    // Filter XP transactions
+  #processData() {
     this.xpTransactions = this.userData.transactions
-      .filter((t) => t.type === "xp")
+      .filter((t) => t.type === "xp" && t.path.includes("module"))
       .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-
     this.progresses = this.userData.progresses || [];
-  },
+  }
 
-  renderDashboard() {
-    this.updateUserInfo();
-    this.updateStats();
-    this.renderGraphs();
-    this.renderRecentActivity();
-  },
+  #renderDashboard() {
+    this.#updateUserInfo();
+    this.#updateStats();
+    this.#renderGraphs();
+  }
 
-  updateUserInfo() {
+  #updateUserInfo() {
     const login = document.getElementById("user-login");
     const userId = document.getElementById("user-id");
     const avatar = document.getElementById("user-avatar-text");
+    const welcomeName =
+      this.userData.firstName && this.userData.lastName
+        ? `${this.userData.firstName} ${this.userData.lastName}`
+        : this.userData.login;
 
-    if (login) login.textContent = this.userData.login;
-    if (userId) userId.textContent = `ID: ${this.userData.id}`;
+    if (login) login.textContent = `Welcome, ${welcomeName}!`;
+    if (userId) userId.textContent = `Login: ${this.userData.id}`;
     if (avatar)
       avatar.textContent = this.userData.login.substring(0, 2).toUpperCase();
-  },
+  }
 
-  updateStats() {
-    // Total XP
-    const totalXP = this.xpTransactions.reduce((sum, t) => sum + t.amount, 0);
+  #updateStats() {
+    const totalXP = this.userData.xp_total.aggregate.sum.amount;
     const totalXPEl = document.getElementById("total-xp");
     if (totalXPEl) {
-      totalXPEl.textContent = this.formatNumber(totalXP) + " XP";
+      totalXPEl.textContent = this.#formatNumber(totalXP, "XP");
     }
 
-    // Audit Ratio
     const auditRatioEl = document.getElementById("audit-ratio");
     if (auditRatioEl) {
       const ratio =
@@ -61,56 +60,54 @@ const Dashboard = {
       auditRatioEl.textContent = ratio.toFixed(2);
     }
 
-    // Projects Passed
-    const passed = this.progresses.filter((p) => p.grade === 1).length;
+    const projects = this.progresses.filter((p) => p.object.type === "project");
+    const passedProjects = projects.filter((p) => p.grade === 1).length;
     const passedEl = document.getElementById("projects-passed");
-    if (passedEl) passedEl.textContent = passed;
+    if (passedEl) passedEl.textContent = passedProjects;
 
-    // Success Rate
-    const total = this.progresses.length;
-    const successRate = total > 0 ? ((passed / total) * 100).toFixed(1) : 0;
+    const totalProjects = projects.length;
+    const successRate =
+      totalProjects > 0
+        ? ((passedProjects / totalProjects) * 100).toFixed(1)
+        : 0;
     const successRateEl = document.getElementById("success-rate");
     if (successRateEl) successRateEl.textContent = successRate + "%";
-  },
+  }
 
-  renderGraphs() {
-    this.renderXPTimeline();
-    this.renderXPByProjects();
-    this.renderAuditRatio();
-    this.renderPassFailRatio();
-  },
+  #renderGraphs() {
+    this.#renderXPTimeline();
+    this.#renderXPByProjects();
+    this.#renderAuditRatio();
+    this.#renderPassFailRatio();
+    this.#renderCollaborationGraph();
+  }
 
-  renderXPTimeline() {
+  #renderXPTimeline() {
     const svg = document.getElementById("xp-timeline-graph");
     if (!svg || this.xpTransactions.length === 0) return;
 
-    const width = 600;
-    const height = 300;
-    const padding = 60;
-
+    const width = 600,
+      height = 300,
+      padding = 60;
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     svg.innerHTML = "";
 
-    // Calculate cumulative XP
     let cumulative = 0;
     const points = this.xpTransactions.map((t) => {
       cumulative += t.amount;
       return { date: new Date(t.createdAt), xp: cumulative };
     });
 
-    // Find min/max
     const maxXP = Math.max(...points.map((p) => p.xp));
     const minDate = points[0].date;
     const maxDate = points[points.length - 1].date;
-    const dateRange = maxDate - minDate;
+    const dateRange = maxDate - minDate || 1; // Prevent division by zero
 
-    // Create scales
     const xScale = (date) =>
       padding + ((date - minDate) / dateRange) * (width - padding * 2);
     const yScale = (xp) =>
       height - padding - (xp / maxXP) * (height - padding * 2);
 
-    // Draw axes
     const axesGroup = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "g"
@@ -118,12 +115,12 @@ const Dashboard = {
     axesGroup.innerHTML = `
       <line x1="${padding}" y1="${height - padding}" x2="${
       width - padding
-    }" y2="${height - padding}" 
-            stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+    }" y2="${
+      height - padding
+    }" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
       <line x1="${padding}" y1="${padding}" x2="${padding}" y2="${
       height - padding
-    }" 
-            stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+    }" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
     `;
     svg.appendChild(axesGroup);
 
@@ -148,7 +145,6 @@ const Dashboard = {
     }
     svg.appendChild(gridGroup);
 
-    // Draw line
     const pathData = points
       .map((p, i) => {
         const x = xScale(p.date);
@@ -175,7 +171,6 @@ const Dashboard = {
     area.setAttribute("fill", "rgba(153, 105, 255, 0.2)");
     svg.appendChild(area);
 
-    // Draw points
     points.forEach((p) => {
       const circle = document.createElementNS(
         "http://www.w3.org/2000/svg",
@@ -187,65 +182,41 @@ const Dashboard = {
       circle.setAttribute("fill", "#9969ff");
       circle.setAttribute("stroke", "#fff");
       circle.setAttribute("stroke-width", "2");
-
-      // Tooltip
       const title = document.createElementNS(
         "http://www.w3.org/2000/svg",
         "title"
       );
-      title.textContent = `${p.date.toLocaleDateString()}: ${this.formatNumber(
-        p.xp
-      )} XP`;
+      title.textContent = `${p.date.toLocaleDateString()}: ${this.#formatNumber(
+        p.xp,
+        "XP"
+      )}`;
       circle.appendChild(title);
-
       svg.appendChild(circle);
     });
+  }
 
-    // Labels
-    const labelsGroup = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "g"
-    );
-    labelsGroup.innerHTML = `
-      <text x="${width / 2}" y="${
-      height - 10
-    }" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="12">Time</text>
-      <text x="20" y="${
-        height / 2
-      }" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="12" transform="rotate(-90, 20, ${
-      height / 2
-    })">XP</text>
-    `;
-    svg.appendChild(labelsGroup);
-  },
-
-  renderXPByProjects() {
+  #renderXPByProjects() {
     const svg = document.getElementById("xp-projects-graph");
     if (!svg || this.xpTransactions.length === 0) return;
 
-    // Group XP by project path
     const projectXP = {};
     this.xpTransactions.forEach((t) => {
       const projectName = t.path.split("/").pop() || "Unknown";
       projectXP[projectName] = (projectXP[projectName] || 0) + t.amount;
     });
 
-    // Get top 10 projects
     const topProjects = Object.entries(projectXP)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10);
-
-    const width = 600;
-    const height = 300;
-    const padding = 60;
+    const width = 600,
+      height = 300,
+      padding = 60;
     const barWidth = (width - padding * 2) / topProjects.length - 10;
-
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     svg.innerHTML = "";
 
     const maxXP = Math.max(...topProjects.map((p) => p[1]));
 
-    // Draw bars
     topProjects.forEach(([name, xp], i) => {
       const barHeight = (xp / maxXP) * (height - padding * 2);
       const x = padding + i * (barWidth + 10);
@@ -266,12 +237,10 @@ const Dashboard = {
         "http://www.w3.org/2000/svg",
         "title"
       );
-      title.textContent = `${name}: ${this.formatNumber(xp)} XP`;
+      title.textContent = `${name}: ${this.#formatNumber(xp, "XP")}`;
       bar.appendChild(title);
-
       svg.appendChild(bar);
 
-      // Label
       const text = document.createElementNS(
         "http://www.w3.org/2000/svg",
         "text"
@@ -294,18 +263,17 @@ const Dashboard = {
     axis.setAttribute("stroke", "rgba(255,255,255,0.2)");
     axis.setAttribute("stroke-width", "2");
     svg.appendChild(axis);
-  },
+  }
 
-  renderAuditRatio() {
+  #renderAuditRatio() {
     const svg = document.getElementById("audit-ratio-graph");
     if (!svg) return;
 
-    const width = 300;
-    const height = 300;
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const radius = 100;
-
+    const width = 300,
+      height = 300,
+      centerX = width / 2,
+      centerY = height / 2,
+      radius = 100;
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     svg.innerHTML = "";
 
@@ -321,14 +289,11 @@ const Dashboard = {
 
     const upPercent = (totalUp / total) * 100;
     const downPercent = (totalDown / total) * 100;
-
-    // Calculate angles
     const upAngle = (upPercent / 100) * 360;
     const downAngle = (downPercent / 100) * 360;
 
-    // Draw pie slices
-    const upPath = this.describeArc(centerX, centerY, radius, 0, upAngle);
-    const downPath = this.describeArc(
+    const upPath = this.#describeArc(centerX, centerY, radius, 0, upAngle);
+    const downPath = this.#describeArc(
       centerX,
       centerY,
       radius,
@@ -348,7 +313,7 @@ const Dashboard = {
       "http://www.w3.org/2000/svg",
       "title"
     );
-    upTitle.textContent = `Given: ${this.formatNumber(
+    upTitle.textContent = `Given: ${this.#formatNumber(
       totalUp
     )} (${upPercent.toFixed(1)}%)`;
     upSlice.appendChild(upTitle);
@@ -366,7 +331,7 @@ const Dashboard = {
       "http://www.w3.org/2000/svg",
       "title"
     );
-    downTitle.textContent = `Received: ${this.formatNumber(
+    downTitle.textContent = `Received: ${this.#formatNumber(
       totalDown
     )} (${downPercent.toFixed(1)}%)`;
     downSlice.appendChild(downTitle);
@@ -397,22 +362,22 @@ const Dashboard = {
       <text x="40" y="57" fill="rgba(255,255,255,0.8)" font-size="12">Received</text>
     `;
     svg.appendChild(legend);
-  },
+  }
 
-  renderPassFailRatio() {
+  #renderPassFailRatio() {
     const svg = document.getElementById("pass-fail-graph");
-    if (!svg || this.progresses.length === 0) return;
+    if (!svg || !this.progresses) return;
 
-    const passed = this.progresses.filter((p) => p.grade === 1).length;
-    const failed = this.progresses.filter((p) => p.grade === 0).length;
+    const projects = this.progresses.filter((p) => p.object.type === "project");
+    const passed = projects.filter((p) => p.grade === 1).length;
+    const failed = projects.filter((p) => p.grade === 0).length;
     const total = passed + failed;
 
-    const width = 300;
-    const height = 300;
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const radius = 100;
-
+    const width = 300,
+      height = 300,
+      centerX = width / 2,
+      centerY = height / 2,
+      radius = 100;
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     svg.innerHTML = "";
 
@@ -423,26 +388,25 @@ const Dashboard = {
     }
 
     const passPercent = (passed / total) * 100;
-    const failPercent = (failed / total) * 100;
-
-    // Draw donut chart
     const passAngle = (passPercent / 100) * 360;
-    const failAngle = (failPercent / 100) * 360;
 
-    const passPath = this.describeArc(
+    // Handle edge case where one is 100%
+    const endAngle = passAngle === 360 ? 359.99 : passAngle;
+
+    const passPath = this.#describeArc(
       centerX,
       centerY,
       radius,
       0,
-      passAngle,
+      endAngle,
       60
     );
-    const failPath = this.describeArc(
+    const failPath = this.#describeArc(
       centerX,
       centerY,
       radius,
-      passAngle,
-      passAngle + failAngle,
+      endAngle,
+      360,
       60
     );
 
@@ -466,7 +430,6 @@ const Dashboard = {
     failSlice.setAttribute("stroke-width", "2");
     svg.appendChild(failSlice);
 
-    // Center text
     const centerGroup = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "g"
@@ -479,11 +442,10 @@ const Dashboard = {
     )}%</text>
       <text x="${centerX}" y="${
       centerY + 15
-    }" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="14">Success Rate</text>
+    }" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="14">Success</text>
     `;
     svg.appendChild(centerGroup);
 
-    // Legend
     const legend = document.createElementNS("http://www.w3.org/2000/svg", "g");
     legend.innerHTML = `
       <circle cx="30" cy="30" r="8" fill="#2ecc71"/>
@@ -492,86 +454,139 @@ const Dashboard = {
       <text x="45" y="60" fill="rgba(255,255,255,0.8)" font-size="12">Failed: ${failed}</text>
     `;
     svg.appendChild(legend);
-  },
+  }
 
-  renderRecentActivity() {
-    const container = document.getElementById("recent-activity");
-    if (!container) return;
+  #renderCollaborationGraph() {
+    const svg = document.getElementById("collaboration-graph");
+    if (!svg || !this.progresses) return;
 
-    const recent = this.userData.transactions
-      .slice(0, 10)
-      .map((t) => {
-        const date = new Date(t.createdAt).toLocaleDateString();
-        const type = t.type.toUpperCase();
-        const amount =
-          t.amount > 0
-            ? `+${this.formatNumber(t.amount)}`
-            : this.formatNumber(t.amount);
-        const project = t.path.split("/").pop() || "Unknown";
+    const members = [];
+    const currentUserLogin = this.userData.login;
 
-        return `
-          <div class="activity-item">
-            <div class="activity-icon ${t.type}">${
-          type === "XP" ? "⭐" : "📋"
-        }</div>
-            <div class="activity-details">
-              <div class="activity-title">${project}</div>
-              <div class="activity-meta">${date} • ${type}</div>
-            </div>
-            <div class="activity-value ${
-              t.amount > 0 ? "positive" : "negative"
-            }">${amount}</div>
-          </div>
-        `;
-      })
-      .join("");
+    this.progresses.forEach((project) => {
+      if (project.group && project.group.members) {
+        project.group.members.forEach((member) => {
+          const userlogin = member.userLogin;
+          if (userlogin !== currentUserLogin) {
+            let existingMember = members.find((m) => m.userlogin === userlogin);
+            if (!existingMember) {
+              members.push({ userlogin, times: 1 });
+            } else {
+              existingMember.times++;
+            }
+          }
+        });
+      }
+    });
 
-    container.innerHTML = recent || '<p class="no-data">No recent activity</p>';
-  },
+    const topCollaborators = members
+      .sort((a, b) => b.times - a.times)
+      .slice(0, 10);
+    const width = 600,
+      height = 300,
+      padding = 60;
 
-  // Helper functions
-  formatNumber(num) {
-    return new Intl.NumberFormat("en-US").format(num);
-  },
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    svg.innerHTML = "";
 
-  describeArc(x, y, radius, startAngle, endAngle, innerRadius = 0) {
-    const start = this.polarToCartesian(x, y, radius, endAngle);
-    const end = this.polarToCartesian(x, y, radius, startAngle);
+    if (topCollaborators.length === 0) {
+      svg.innerHTML =
+        '<text x="300" y="150" text-anchor="middle" fill="rgba(255,255,255,0.6)">No collaboration data</text>';
+      return;
+    }
+
+    const barWidth = (width - padding * 2) / topCollaborators.length - 10;
+    const maxTimes = Math.max(...topCollaborators.map((p) => p.times));
+
+    topCollaborators.forEach(({ userlogin, times }, i) => {
+      const barHeight = (times / maxTimes) * (height - padding * 2);
+      const x = padding + i * (barWidth + 10);
+      const y = height - padding - barHeight;
+
+      const bar = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "rect"
+      );
+      bar.setAttribute("x", x);
+      bar.setAttribute("y", y);
+      bar.setAttribute("width", barWidth);
+      bar.setAttribute("height", barHeight);
+      bar.setAttribute("fill", `hsl(${180 + i * 15}, 70%, 60%)`);
+      bar.setAttribute("rx", "4");
+
+      const title = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "title"
+      );
+      title.textContent = `${userlogin}: ${times} projects together`;
+      bar.appendChild(title);
+      svg.appendChild(bar);
+
+      const text = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "text"
+      );
+      text.setAttribute("x", x + barWidth / 2);
+      text.setAttribute("y", height - padding + 20);
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("fill", "rgba(255,255,255,0.6)");
+      text.setAttribute("font-size", "10");
+      text.textContent = userlogin.substring(0, 8);
+      svg.appendChild(text);
+    });
+
+    // Y-axis
+    const axis = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    axis.setAttribute("x1", padding);
+    axis.setAttribute("y1", padding);
+    axis.setAttribute("x2", padding);
+    axis.setAttribute("y2", height - padding);
+    axis.setAttribute("stroke", "rgba(255,255,255,0.2)");
+    axis.setAttribute("stroke-width", "2");
+    svg.appendChild(axis);
+  }
+
+  // --- Private Helper Functions ---
+
+  #formatNumber(sizeInBytes, xp) {
+    var result;
+    if (sizeInBytes < 1000) {
+      result = sizeInBytes + " B";
+    } else if (sizeInBytes < 1000 * 1000) {
+      if (xp === "XP") {
+        result = Math.floor(sizeInBytes / 1000) + " kB";
+      } else {
+        result = (sizeInBytes / 1000).toFixed(2) + " KB";
+      }
+    } else {
+      if (xp === "XP") {
+        result = Math.floor(sizeInBytes / 1000 / 1000) + " MB";
+      } else {
+        sizeInBytes = (sizeInBytes / 1000 / 1000).toFixed(3);
+        result = sizeInBytes.slice(0, 4) + " MB";
+      }
+    }
+    return result;
+  }
+
+  #describeArc(x, y, radius, startAngle, endAngle, innerRadius = 0) {
+    const start = this.#polarToCartesian(x, y, radius, endAngle);
+    const end = this.#polarToCartesian(x, y, radius, startAngle);
     const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
 
     if (innerRadius > 0) {
-      const innerStart = this.polarToCartesian(x, y, innerRadius, endAngle);
-      const innerEnd = this.polarToCartesian(x, y, innerRadius, startAngle);
+      const innerStart = this.#polarToCartesian(x, y, innerRadius, endAngle);
+      const innerEnd = this.#polarToCartesian(x, y, innerRadius, startAngle);
       return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y} L ${innerEnd.x} ${innerEnd.y} A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 1 ${innerStart.x} ${innerStart.y} Z`;
     }
-
     return `M ${x} ${y} L ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 0 ${end.x} ${end.y} Z`;
-  },
+  }
 
-  polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+  #polarToCartesian(centerX, centerY, radius, angleInDegrees) {
     const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
     return {
       x: centerX + radius * Math.cos(angleInRadians),
       y: centerY + radius * Math.sin(angleInRadians),
     };
-  },
-};
-
-// Initialize dashboard when view is shown
-document.addEventListener("DOMContentLoaded", () => {
-  const dashboardView = document.getElementById("dashboard-view");
-  if (dashboardView) {
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.target.style.display === "flex") {
-          Dashboard.init();
-        }
-      });
-    });
-
-    observer.observe(dashboardView, {
-      attributes: true,
-      attributeFilter: ["style"],
-    });
   }
-});
+}

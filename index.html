@@ -8,11 +8,6 @@
       content="A platform where you can see your own school information"
     />
     <title>Zone01 Oujda - GraphQL Profile</title>
-    <link
-      rel="preload"
-      as="font"
-      href="/assets/IBMPlexSans-light-latin.woff2"
-    />
     <link rel="stylesheet" href="css/styles.css" />
     <link rel="icon" href="assets/logo.png" type="image/png" />
   </head>
@@ -179,14 +174,14 @@
                     <svg id="pass-fail-graph" class="graph-svg"></svg>
                   </div>
                 </div>
-              </div>
-            </section>
 
-            <!-- Recent Activity -->
-            <section class="activity-section">
-              <h2 class="section-title">Recent Activity</h2>
-              <div id="recent-activity" class="activity-list">
-                <!-- Activity items will be inserted here -->
+                <!-- Top Collaborators -->
+                <div class="graph-card">
+                  <h3 class="graph-title">Top Collaborators</h3>
+                  <div class="graph-container">
+                    <svg id="collaboration-graph" class="graph-svg"></svg>
+                  </div>
+                </div>
               </div>
             </section>
           </main>
@@ -202,7 +197,7 @@
       </div>
     </div>
 
-    <script src="js/main.js"></script>
-    <script src="js/dashboard.js"></script>
+    <script src="js/main.js" type="module"></script>
+    <!-- <script src="js/dashboard.js"></script> -->
   </body>
 </html>
